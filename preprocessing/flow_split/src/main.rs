@@ -3,10 +3,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 use pcap::{Capture, Offline, Packet as PcapPacket};
 use pnet_packet::{ethernet::{EthernetPacket, EtherTypes}, ip::IpNextHeaderProtocols, ipv4::Ipv4Packet, ipv6::Ipv6Packet, tcp::TcpPacket, udp::UdpPacket, Packet};
 use rayon::prelude::*;
+use sha2::{Digest, Sha256};
 use std::{
-    collections::HashSet,
-    fs::{self, OpenOptions},
-    io::{self, Write},
+    collections::{HashMap, HashSet},
+    fs::{self, File, OpenOptions},
+    io::{self, Read, Write},
     net::IpAddr,
     path::{Path, PathBuf, MAIN_SEPARATOR},
     sync::{Arc, Mutex},
@@ -27,15 +28,25 @@ fn main() -> io::Result<()> {
         .arg(
             Arg::new("output_dir").short('o').long("output").value_name("OUTPUT_DIR").help("Where to write per‑flow pcaps and resume log").required(true),
         )
+        .arg(
+            Arg::new("project_dir")
+                .short('p')
+                .long("project")
+                .value_name("PROJECT_DIR")
+                .help("Directory to write logs and reports")
+                .required(true),
+        )
         .get_matches();
 
     let input_dir = Path::new(matches.get_one::<String>("input_dir").unwrap());
     let output_dir = Path::new(matches.get_one::<String>("output_dir").unwrap());
+    let project_dir = Path::new(matches.get_one::<String>("project_dir").unwrap());
     fs::create_dir_all(output_dir)?;
+    fs::create_dir_all(project_dir)?;
 
     // Path to resume log:
-    let log_path = output_dir.join("processed.txt");
-    // Read existing processed set
+    let log_path = project_dir.join("processed.txt");
+    // Read an existing processed set
     let mut processed_set = HashSet::new();
     if log_path.exists() {
         let contents = fs::read_to_string(&log_path)?;
@@ -64,6 +75,7 @@ fn main() -> io::Result<()> {
             continue;
         }
         files_to_process.push(path.to_path_buf());
+        
     }
 
     // Progress bar
@@ -91,13 +103,14 @@ fn main() -> io::Result<()> {
         pb.inc(1);
     });
 
-    pb.finish_with_message("Processing complete");
-    Ok(())
+    pb.finish_with_message("Splitting complete");
+    // Deduplication and reporting
+    dedupe_and_report(output_dir, project_dir)
 }
 
 /// Handle one PCAP file: extract flows and dump into separate PCAPs
-fn process_file(path: &PathBuf, input_dir: &Path, output_dir: &Path) -> io::Result<()> {
-    // Sanitize base name from relative path
+fn process_file(path: &Path, input_dir: &Path, output_dir: &Path) -> io::Result<()> {
+    // Sanitize base name from a relative path
     let rel = path.strip_prefix(input_dir).unwrap();
     let base = rel
         .with_extension("")
@@ -154,6 +167,54 @@ fn write_flow(src: &Path, flow: &FlowKey, out_path: &Path) -> io::Result<()> {
                 dumper.write(&pkt);
             }
         }
+    }
+    Ok(())
+}
+
+/// Deduplicate files, log deletions, and report sizes
+fn dedupe_and_report(output_dir: &Path, project_dir: &Path) -> io::Result<()> {
+    let mut seen: HashMap<String, PathBuf> = HashMap::new();
+    let mut del_log = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(project_dir.join("deleted_flows.txt"))?;
+    let mut size_csv = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(project_dir.join("flow_sizes.csv"))?;
+    writeln!(size_csv, "filename,size_bytes")?;
+
+    let mut largest: Option<(PathBuf, u64)> = None;
+    for entry in WalkDir::new(output_dir).into_iter().filter_map(Result::ok) {
+        let p = entry.path();
+        if p.is_file() && p.extension().and_then(|e| e.to_str()).map(|s| s.eq_ignore_ascii_case("pcap")).unwrap_or(false) {
+            let rel = p.strip_prefix(output_dir).unwrap().to_string_lossy().to_string();
+            let sz = fs::metadata(p)?.len();
+            writeln!(size_csv, "{},{}", rel, sz)?;
+            if largest.as_ref().map_or(true, |(_, m)| sz > *m) {
+                largest = Some((PathBuf::from(&rel), sz));
+            }
+            // compute SHA256
+            let mut f = File::open(p)?;
+            let mut hasher = Sha256::new();
+            let mut buf = [0u8; 8192];
+            loop {
+                let n = f.read(&mut buf)?;
+                if n == 0 { break; }
+                hasher.update(&buf[..n]);
+            }
+            let hash_bytes = hasher.finalize();
+            let hash_str = hash_bytes.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+            if let Some(_orig) = seen.insert(hash_str, PathBuf::from(&rel)) {
+                fs::remove_file(p)?;
+                writeln!(del_log, "{}", rel)?;
+            }
+        }
+    }
+    if let Some((path, sz)) = largest {
+        let mut out = File::create(project_dir.join("largest_flow.txt"))?;
+        writeln!(out, "{},{}", path.display(), sz)?;
     }
     Ok(())
 }
