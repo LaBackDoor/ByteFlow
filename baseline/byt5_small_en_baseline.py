@@ -98,7 +98,7 @@ def train_byt5_on_mc4():
         output_dir=output_dir,
         overwrite_output_dir=True,
         # --- Batch Size & Epochs ---
-        per_device_train_batch_size=64,
+        per_device_train_batch_size=282,
         max_steps=1_000_000,
         # --- Logging, Saving & Checkpointing ---
         logging_dir='./logs_full_pretrain_1024',
