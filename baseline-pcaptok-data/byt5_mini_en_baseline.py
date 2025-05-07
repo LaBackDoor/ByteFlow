@@ -10,12 +10,15 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
-
+from datasets import interleave_datasets
 from t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
+import subprocess, os
+from datasets import Dataset
 
 MAX_SEQ_LENGTH = 1024
 NOISE_DENSITY = 0.15
 MEAN_NOISE_SPAN_LENGTH = 20.0
+RUST_PARSER = "/path/to/pcap2bytes"
 
 def train_byt5_on_mc4():
     """
@@ -30,33 +33,64 @@ def train_byt5_on_mc4():
         mean_noise_span_length=MEAN_NOISE_SPAN_LENGTH
     )
 
+    config = T5Config(
+        vocab_size=384,  # Byte-level vocab with specials
+        d_model=768,
+        d_ff=2048,
+        num_layers=6,
+        num_decoder_layers=2,
+        num_heads=8,
+        d_kv=64,
+        dropout_rate=0.1,
+        layer_norm_epsilon=1e-6,
+        initializer_factor=1.0,
+        feed_forward_proj="gated-gelu",
+        tie_word_embeddings=True,
+        is_encoder_decoder=True,
+        is_gated_act=True,
+        relative_attention_num_buckets=32,
+        relative_attention_max_distance=128,
+        pad_token_id=0,
+        eos_token_id=1,
+        decoder_start_token_id=0,
+        use_cache=False
+    )
+
     # 1. Define Model and Tokenizer
     model_name = "google/byt5-small"
     tokenizer = ByT5Tokenizer.from_pretrained(model_name)
-    model = T5ForConditionalGeneration.from_pretrained(model_name)
+
+    PCAP_SPECIAL_TOKENS = [
+        "<FLOW_START>",
+        "<PACKET_START>",
+        "<FIELD_SEP>",
+        "<TIME_DELTA>",
+        "<LINK_TYPE>",
+        "<EOS_PACKET>",
+        "<FLOW_END>",
+        "<TEXT_START>",
+        "<TEXT_END>",
+    ]
+    tokenizer.add_special_tokens({
+        "additional_special_tokens": PCAP_SPECIAL_TOKENS
+    })
+
+    model = T5ForConditionalGeneration(config)
+    model.resize_token_embeddings(len(tokenizer))
+
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     # Verify model configuration
-    config = T5Config.from_pretrained(model_name)
     print(f"Loaded model config for {model_name}:")
     print(f"  Encoder layers: {config.num_layers}")
     print(f"  Decoder layers: {config.num_decoder_layers}")
     print(f"  d_model: {config.d_model}")
     print(f"  d_ff: {config.d_ff}")
-    print(f"  Target params (approx): 300M (ByT5-Small from paper)")
+    print(f"  Target params (approx): {total_params} and Trainable params (approx): {trainable_params}")
 
     # Gradient Checkpointing to save memory for larger models/batches
     model.gradient_checkpointing_enable()
-
-    # 2. Load the mC4 Dataset (English portion - Full Stream)
-    print("Loading mC4 dataset (English) for streaming...")
-    try:
-        dataset = load_dataset("allenai/c4", "en", streaming=True, trust_remote_code=True)
-        train_dataset = dataset['train']
-    except Exception as e:
-        print(f"Error loading dataset: {e}")
-        return
-
-    print("Dataset stream obtained.")
 
     def preprocess_function(examples):
         tokenized_output = tokenizer(
@@ -68,14 +102,39 @@ def train_byt5_on_mc4():
         )
         return tokenized_output
 
-    print(f"Setting up on-the-fly dataset preprocessing with max_seq_length: {MAX_SEQ_LENGTH}...")
+    # 2. Load the mC4 Dataset (English portion - Full Stream)
+    print("Loading mC4 dataset (English) for streaming...")
     try:
-        tokenized_train_dataset = train_dataset.map(preprocess_function, batched=True)
+        dataset = load_dataset("allenai/c4", "en", streaming=True, trust_remote_code=True)
+        eng_ds = dataset["train"].map(preprocess_function, batched=True)
     except Exception as e:
-        print(f"Error during dataset mapping setup: {e}")
+        print(f"Error loading dataset: {e}")
         return
 
-    print("Dataset preprocessing pipeline configured.")
+    print("Dataset stream obtained.")
+
+    # 4) Load & tokenize PCAP flows
+
+    def parse_pcap(path):
+        out = subprocess.check_output([RUST_PARSER, path])
+        return out.decode("utf-8").strip()
+
+
+
+    def pcap_gen(dir_):
+        for f in os.listdir(dir_):
+            if not f.endswith(".pcap"):
+                continue
+            txt = parse_pcap(os.path.join(dir_, f))
+            yield {"text": txt}
+
+    pcap_ds = Dataset.from_generator(lambda: pcap_gen("/mnt/data/pcap_flows"))
+    pcap_tok = pcap_ds.map(preprocess_function, batched=True)
+
+    # 5) Mix English + PCAP
+    train_dataset = interleave_datasets([eng_ds, pcap_tok], probabilities=[0.8, 0.2])
+
+    train_split = train_dataset  # pass this into Trainer below
 
     # 4. Data Collator
     data_collator = DataCollatorForT5MLM(
@@ -98,7 +157,7 @@ def train_byt5_on_mc4():
         output_dir=output_dir,
         overwrite_output_dir=True,
         # --- Batch Size & Epochs ---
-        per_device_train_batch_size=282,
+        per_device_train_batch_size=90,
         max_steps=1_000_000,
         # --- Logging, Saving & Checkpointing ---
         logging_dir='./logs_full_pretrain_1024',
@@ -157,6 +216,7 @@ def train_byt5_on_mc4():
     os.makedirs(final_save_path, exist_ok=True)
     model.save_pretrained(final_save_path)
     tokenizer.save_pretrained(final_save_path)
+    config.save_pretrained(final_save_path)
     print(f"Model and tokenizer saved to {final_save_path}")
 
     print("Script execution finished.")
