@@ -1,4 +1,4 @@
-# Import necessary libraries from Hugging Face
+
 import os
 
 import torch
@@ -10,15 +10,12 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
-from datasets import interleave_datasets
+
 from t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
-import subprocess, os
-from datasets import Dataset
 
 MAX_SEQ_LENGTH = 1024
 NOISE_DENSITY = 0.15
 MEAN_NOISE_SPAN_LENGTH = 20.0
-RUST_PARSER = "/path/to/pcap2bytes"
 
 def train_byt5_on_mc4():
     """
@@ -34,7 +31,7 @@ def train_byt5_on_mc4():
     )
 
     config = T5Config(
-        vocab_size=384,  # Byte-level vocab with specials
+        vocab_size=384,
         d_model=768,
         d_ff=2048,
         num_layers=6,
@@ -59,24 +56,7 @@ def train_byt5_on_mc4():
     # 1. Define Model and Tokenizer
     model_name = "google/byt5-small"
     tokenizer = ByT5Tokenizer.from_pretrained(model_name)
-
-    PCAP_SPECIAL_TOKENS = [
-        "<FLOW_START>",
-        "<PACKET_START>",
-        "<FIELD_SEP>",
-        "<TIME_DELTA>",
-        "<LINK_TYPE>",
-        "<EOS_PACKET>",
-        "<FLOW_END>",
-        "<TEXT_START>",
-        "<TEXT_END>",
-    ]
-    tokenizer.add_special_tokens({
-        "additional_special_tokens": PCAP_SPECIAL_TOKENS
-    })
-
     model = T5ForConditionalGeneration(config)
-    model.resize_token_embeddings(len(tokenizer))
 
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -113,28 +93,6 @@ def train_byt5_on_mc4():
 
     print("Dataset stream obtained.")
 
-    # 4) Load & tokenize PCAP flows
-
-    def parse_pcap(path):
-        out = subprocess.check_output([RUST_PARSER, path])
-        return out.decode("utf-8").strip()
-
-
-
-    def pcap_gen(dir_):
-        for f in os.listdir(dir_):
-            if not f.endswith(".pcap"):
-                continue
-            txt = parse_pcap(os.path.join(dir_, f))
-            yield {"text": txt}
-
-    pcap_ds = Dataset.from_generator(lambda: pcap_gen("/mnt/data/pcap_flows"))
-    pcap_tok = pcap_ds.map(preprocess_function, batched=True)
-
-    # 5) Mix English + PCAP
-    train_dataset = interleave_datasets([eng_ds, pcap_tok], probabilities=[0.8, 0.2])
-
-    train_split = train_dataset  # pass this into Trainer below
 
     # 4. Data Collator
     data_collator = DataCollatorForT5MLM(
@@ -196,7 +154,7 @@ def train_byt5_on_mc4():
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_train_dataset,
+        train_dataset=eng_ds,
         data_collator=data_collator,
         tokenizer=tokenizer,
     )
@@ -230,4 +188,3 @@ if __name__ == "__main__":
         f"CUDA is available. Number of GPUs visible to this process: {torch.cuda.device_count()}")
 
     train_byt5_on_mc4()
-

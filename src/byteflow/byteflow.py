@@ -1,16 +1,17 @@
 import os
+import random
+
 import torch
-from datasets import load_dataset, Dataset, IterableDataset, interleave_datasets
+from datasets import load_dataset, IterableDataset, interleave_datasets
 from transformers import (
     T5ForConditionalGeneration,
     T5Config,
     TrainingArguments,
     Trainer,
 )
-from hybrid_byt5_tokenizer import HybridByT5PCAPTokenizer
-from t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
-import itertools
-import random
+
+from src.baseline.t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
+from src.byteflow.tokenizer.tokenizer import HybridByT5PCAPTokenizer
 
 # Constants
 MAX_SEQ_LENGTH = 1024
@@ -145,7 +146,7 @@ def train_byt5_on_mc4_and_pcap():
 
 
     # Configure output directory
-    output_dir = "./byt5_mini_mc4_pcap_1024"
+    output_dir = "./byteflow_1024"
 
     # Calculate optimal number of dataloader workers
     num_cpus = os.cpu_count()
