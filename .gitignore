@@ -4,3 +4,5 @@
 /baseline/wandb/
 /data/
 /preprocessing/flow_split/processed.txt
+/src/baseline/wandb/
+/src/baseline/byt5_mc4_english_full_pretrain_1024/
