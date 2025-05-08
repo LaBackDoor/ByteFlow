@@ -18,7 +18,7 @@ class HybridByT5PCAPTokenizer(ByT5Tokenizer):
             pad_token="<pad>",
             extra_ids=0,
             additional_special_tokens=None,
-            pcap_vocab_size=277,
+            pcap_vocab_size=280,  # Increased for new special tokens
             **kwargs,
     ):
         # Initialize with special tokens for content boundaries
@@ -29,7 +29,9 @@ class HybridByT5PCAPTokenizer(ByT5Tokenizer):
             "<text_end>",
             "<pcap_attachment>",
             "<packet_start>",
-            "<packet_end>"
+            "<packet_end>",
+            "<flow_end>",      # New token for flow end
+            "<field_sep>"      # Field separator token
         ]
 
         if additional_special_tokens:
@@ -56,11 +58,17 @@ class HybridByT5PCAPTokenizer(ByT5Tokenizer):
         self.text_start_token_id = self.convert_tokens_to_ids("<text_start>")
         self.text_end_token_id = self.convert_tokens_to_ids("<text_end>")
         self.pcap_attachment_token_id = self.convert_tokens_to_ids("<pcap_attachment>")
+        self.field_sep_token_id = self.convert_tokens_to_ids("<field_sep>")
+        self.packet_start_token_id = self.convert_tokens_to_ids("<packet_start>")
+        self.packet_end_token_id = self.convert_tokens_to_ids("<packet_end>")
+        self.flow_end_token_id = self.convert_tokens_to_ids("<flow_end>")
 
         # Map between PCAPTokenizer special tokens and our special token IDs
         self.pcap_to_byt5_token_map = {
-            self.pcap_tokenizer.special_tokens['packet_start']: self.convert_tokens_to_ids("<packet_start>"),
-            self.pcap_tokenizer.special_tokens['end']: self.convert_tokens_to_ids("<packet_end>"),
+            self.pcap_tokenizer.special_tokens['packet_start']: self.packet_start_token_id,
+            self.pcap_tokenizer.special_tokens['packet_end']: self.packet_end_token_id,
+            self.pcap_tokenizer.special_tokens['flow_end']: self.flow_end_token_id,
+            self.pcap_tokenizer.special_tokens['field_sep']: self.field_sep_token_id
         }
 
         # Add tokens for all link types
