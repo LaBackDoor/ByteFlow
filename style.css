@@ -1,0 +1,284 @@
+:root {
+  --bg-color-light: #ffffff;
+  --text-color-light: #333;
+  --bg-color-dark: #1e1e1e;
+  --text-color-dark: #f0f0f0;
+  --accent-color: #0C4B33; /* Baylor green */
+  --accent-hover: #FFC61E; /* Baylor gold */
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--text-color-light);
+  background-color: var(--bg-color-light);
+  transition: color 0.3s, background-color 0.3s;
+  padding-left: 8px;
+  padding-right: 4px;
+}
+
+p {
+  margin: 4px 0;
+}
+
+.dark-mode {
+  background-color: var(--bg-color-dark);
+  color: var(--text-color-dark);
+}
+
+.header {
+  text-align: center;
+  padding: 10px 0;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+h1 {
+  color: var(--accent-color);
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+h3 {
+  color: var(--accent-color);
+  margin-top: 20px;
+}
+
+.authors {
+  font-size: 1.1em;
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.authors a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+.authors sup {
+  font-size: 18px;
+  vertical-align: super;
+}
+
+.authors em {
+  font-size: 14px;
+}
+
+.abstract {
+  scroll-margin-top: 50px;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+h2 {
+  color: var(--accent-color);
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-top: 10px;
+  padding-left: 10px;
+}
+
+.content-section {
+  margin-top: 10px;
+  scroll-margin-top: 50px;
+  margin-bottom: 40px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 50px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  background: #f9f9f9;
+}
+
+.nav {
+  position: sticky;
+  z-index: 1000;
+  top: 0;
+  background: var(--bg-color-light);
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.nav.dark-mode {
+  background: var(--bg-color-dark);
+}
+
+.nav a {
+  margin: 0 10px;
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: var(--accent-hover);
+}
+
+.toggle-btn {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.toggle-btn:hover {
+  background-color: var(--accent-hover);
+  color: #000;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.buttons a {
+  display: inline;
+  padding: 10px 20px;
+  margin: 2px 10px;
+  background-color: var(--accent-color);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.buttons a:hover {
+  background-color: var(--accent-hover);
+  color: #000;
+}
+
+.model-container {
+  text-align: center;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.video-section {
+  margin-top: 40px;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  overflow: hidden;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.bibtex-section {
+  position: relative;
+  margin-top: 40px;
+}
+
+.bibtex-section pre {
+  padding: 20px;
+  background-color: #f5f5f5;
+  overflow-x: auto;
+}
+
+.bibtex-copy-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.bibtex-copy-button:hover {
+  background-color: var(--accent-hover);
+  color: #000;
+}
+
+.image-container {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.scrollUpBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: none;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 15px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  width: 50px;
+  height: 50px;
+}
+
+.scrollUpBtn:hover {
+  background-color: var(--accent-hover);
+  color: #000;
+}
+
+.dark-mode .header,
+.dark-mode .abstract,
+.dark-mode .footer,
+.dark-mode .bibtex-section pre,
+.dark-mode .model-container {
+  background-color: #333;
+  color: var(--text-color-dark);
+}
+
+.dark-mode .buttons a {
+  background-color: #444;
+}
+
+.dark-mode .buttons a:hover {
+  background-color: var(--accent-hover);
+  color: #000;
+}
+
+.dark-mode .nav a {
+  color: var(--text-color-dark);
+}
+
+.dark-mode .nav a:hover {
+  color: var(--accent-hover);
+}
+
+/* Responsive tables */
+@media (max-width: 600px) {
+  table {
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 4px !important;
+  }
+}

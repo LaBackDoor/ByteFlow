@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ByteFlow: The Deep Sea Parser for AI-Powered Network Intelligence</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="ByteFlow: A byte-based network intelligence LLM framework built on top of Byt5 for network traffic analysis and deep packet inspection." />
+    <meta
+      name="keywords"
+      content="ByteFlow, network traffic analysis, AI-powered network intelligence, byte-based transformer, deep packet inspection, network security, Byt5, 2D positional embedding"
+    />
+    <meta name="author" content="Abanisenioluwa Orojo, Emmanuelli El-Mahmoud" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph Meta Tags (For Social Media Sharing) -->
+    <meta
+      property="og:title"
+      content="ByteFlow: The Deep Sea Parser for AI-Powered Network Intelligence"
+    />
+    <meta
+      property="og:description"
+      content="A byte-based network intelligence LLM framework built on top of Byt5 for network traffic analysis and deep packet inspection."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ByteFlow Research" />
+
+    <!-- Favicon for different platforms -->
+    <link
+      rel="icon"
+      href="Assets/Favicon/icons8-research-color-16.png"
+      sizes="16x16"
+      type="image/png"
+    />
+    <link
+      rel="icon"
+      href="Assets/Favicon/icons8-research-color-32.png"
+      sizes="32x32"
+      type="image/png"
+    />
+
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <nav class="nav">
+      <a href="#abstract">Abstract</a>
+      <a href="#introduction">Introduction</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#results">Results</a>
+      <a href="#conclusion">Conclusion</a>
+      <button class="toggle-btn" onclick="toggleDarkMode()">
+        Toggle Dark Mode
+      </button>
+    </nav>
+
+    <!-- Header Part -->
+    <div class="header">
+      <h1>ByteFlow: The Deep Sea Parser for AI-Powered Network Intelligence</h1>
+      <div class="authors">
+        <p>
+          <a href="https://github.com/">Abanisenioluwa Orojo</a><sup>1</sup>,
+          <a href="https://github.com/">Emmanuelli El-Mahmoud</a><sup>1</sup>
+        </p>
+        <p>
+          <sup>1</sup>Department of Computer Science, Baylor University
+        </p>
+        <p>
+          <sup>1</sup><a href="mailto:Abanisenioluwa_Oroj1@baylor.edu">Abanisenioluwa_Oroj1@baylor.edu</a>,
+          <sup>1</sup><a href="mailto:emmanuelli_elmahmou1@baylor.edu">emmanuelli_elmahmou1@baylor.edu</a>
+        </p>
+        <p>📌 CSI 6326 Project, Baylor University</p>
+      </div>
+    </div>
+
+    <!-- Buttons for links -->
+    <div class="buttons">
+      <a href="#" target="_blank">Paper</a>
+      <a href="#" target="_blank">Code</a>
+      <a href="#bibtex">BibTex</a>
+    </div>
+
+    <!-- Model Diagram Section -->
+    <div class="video-section">
+      <h3>Model Architecture</h3>
+      <div class="model-container">
+        <img src="Assets/model.png" alt="ByteFlow Model Architecture" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">
+      </div>
+      <p>
+        The ByteFlow architecture combines PCAP flows with textual data through a modified Byt5 model. 
+        Network traffic is processed using specialized flow tokenization while text is encoded using UTF-8. 
+        Both are then fed through the heavy encoder and light decoder architecture of Byt5.
+      </p>
+    </div>
+
+    <!-- Abstract -->
+    <div class="abstract" id="abstract">
+      <h2>Abstract</h2>
+      <p>In recent years, the complexity and volume of network traffic have increased
+significantly, making it challenging for traditional analysis methods to effectively
+identify malicious activities. Machine learning (ML) inspired network traffic analysis has emerged as a mainstay in cyber anomaly threat detection. Despite their widespread use, conventional ML approaches often struggle with the dynamic and evolving nature of cyber threats, leading to a demand for more adaptive and intelligent solutions. LLMs, which have demonstrated remarkable proficiency in natural language processing tasks, offer a promising avenue to address these challenges.</p>
+      <p>We propose ByteFlow, a byte-based network intelligence LLM framework built on top of Byt5. Our approach features the introduction of a new tokenizer for effectively dealing with nuanced network flows in their raw byte format, a 2D positional embedding (2DPE) that factors into account the structural format of network flows, and a pre-training strategy tailored towards contextual and semantic understanding of network traffic.</p>
+    </div>
+
+    <!-- Introduction -->
+    <div class="content-section" id="introduction">
+      <h2>Introduction</h2>
+      <p>Computer networks serve as the backbone of modern-day communication, powering the internet, critical infrastructure systems, and mobile telecommunications. The proliferation of interconnected systems and the growing reliance on distributed computation have introduced complex security challenges, catalyzing a significant surge in the frequency and sophistication of cyber threats.</p>
+      
+      <p>Network intrusions remain a pervasive threat to data integrity, system availability, and user privacy, often exploiting structural weaknesses across large-scale digital infrastructures. A foundational approach to mitigating these threats lies in the analysis of network traffic, a task that requires modeling complex, high-dimensional temporal data streams.</p>
+      
+      <p>Large Language Models (LLMs) have demonstrated state-of-the-art capabilities across a wide range of natural language processing tasks, including pattern extraction, contextual reasoning, and semantic comprehension. Motivated by these advances, recent studies have begun exploring the applicability of LLMs to domains beyond text, such as encrypted traffic classification, synthetic network traffic generation, and packet-level behavioral analysis.</p>
+      
+      <p>In this paper, we propose ByteFlow, an approach centered around the byt5 architecture to perform network traffic analysis on the raw byte representation of network packet capture files. We propose a novel tokenization, embedding layer, and fine-tuning and training techniques for PCAP inputs.</p>
+    </div>
+
+    <!-- Methodology -->
+    <div class="content-section" id="methodology">
+      <h2>Methodology</h2>
+      <p>Our approach to network traffic analysis centers on a modified byte-level Transformer architecture. We adopt the ByT5-small model, introduced by Xue et al. (2022), as the foundation of our system. ByT5 models are pre-trained on a massive multilingual text corpus and operate directly on UTF-8 byte sequences, unlike traditional tokenization pipelines.</p>
+      
+      <h3>Tokenization Strategy for Network Packets</h3>
+      <p>The conversion of raw network traffic into tokens suitable for our ByT5-based model is an important preprocessing step. Our tokenization process for a network packet includes:</p>
+      <ul>
+        <li><strong>Raw Byte Encoding:</strong> The fundamental component of our tokenization is the direct representation of packet data as a sequence of byte values.</li>
+        <li><strong>Special Tokens for Structure and Semantics:</strong> To provide the model with explicit structural and semantic cues, we introduce several special tokens such as FLOW_START, PACKET_START, FIELD_SEP, and more.</li>
+        <li><strong>Vocabulary Composition:</strong> Our tokenizer's vocabulary consists of standard ByT5 special tokens, our custom structural tokens, and 256 tokens representing the possible byte values.</li>
+      </ul>
+      
+      <h3>Hybrid Attention with 2D Table Positional Encoding</h3>
+      <p>We incorporate a modified attention mechanism that leverages Two-Dimensional Table Positional Encoding (2D-TPE) for packet data, while retaining standard 1D attention for any accompanying textual data. 2D-TPE allows attention heads to dynamically perceive context through different permutation orders (e.g., row-wise and column-wise traversals).</p>
+      
+      <h3>Pre-training Strategy</h3>
+      <p>To give our modified ByT5-small model a foundational understanding of both general textual patterns and the specific structures of network traffic, we employ a self-supervised pre-training phase using the span corruption mechanism with an auxiliary loss term to regularize the routing network.</p>
+      
+      <h3>Multi-Task Fine-Tuning</h3>
+      <p>Following the self-supervised pre-training phase, we adapt ByteFlow to specific downstream tasks including:</p>
+      <ul>
+        <li>Byte Masked Language Modeling (BMLM) on PCAP Data</li>
+        <li>Autoregressive Next-Byte Prediction on PCAP Data</li>
+        <li>Supervised Packet Parsing (Wireshark JSON Prediction)</li>
+        <li>Question Answering (QA) on Packets</li>
+        <li>Field Finding in a Specific Packet</li>
+      </ul>
+    </div>
+
+    <!-- Results -->
+    <div class="content-section" id="results">
+      <h2>Results</h2>
+      <p>We evaluated both model variants on their ability to understand and reconstruct byte-level information within network packets. Our experiments demonstrate the critical role of domain-specific pre-training and the impact of 2D Table Positional Encoding (2D-TPE).</p>
+      
+      <h3>Performance of ByteFlow Base</h3>
+      <table border="1" style="width:100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 8px; text-align: left;">Task</th>
+          <th style="padding: 8px; text-align: left;">Metric</th>
+          <th style="padding: 8px; text-align: right;">Value</th>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">BMLM</td>
+          <td style="padding: 8px;">Byte Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.6173</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Next-byte</td>
+          <td style="padding: 8px;">Byte Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.5286</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;" rowspan="2">Parse</td>
+          <td style="padding: 8px;">JSON Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.8055</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Field Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.6520</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;" rowspan="2">QA</td>
+          <td style="padding: 8px;">Token F1</td>
+          <td style="padding: 8px; text-align: right;">0.2730</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Rouge-L</td>
+          <td style="padding: 8px; text-align: right;">0.3215</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Find-byte</td>
+          <td style="padding: 8px;">Exact Match</td>
+          <td style="padding: 8px; text-align: right;">0.2250</td>
+        </tr>
+      </table>
+      
+      <h3>Performance of ByteFlow Base + 2D-TPE</h3>
+      <table border="1" style="width:100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="background-color: #f2f2f2;">
+          <th style="padding: 8px; text-align: left;">Task</th>
+          <th style="padding: 8px; text-align: left;">Metric</th>
+          <th style="padding: 8px; text-align: right;">Value</th>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">BMLM</td>
+          <td style="padding: 8px;">Byte Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.5924</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Next-byte</td>
+          <td style="padding: 8px;">Byte Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.5829</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;" rowspan="2">Parse</td>
+          <td style="padding: 8px;">JSON Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.8125</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Field Accuracy</td>
+          <td style="padding: 8px; text-align: right;">0.6610</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;" rowspan="2">QA</td>
+          <td style="padding: 8px;">Token F1</td>
+          <td style="padding: 8px; text-align: right;">0.4800</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Rouge-L</td>
+          <td style="padding: 8px; text-align: right;">0.3980</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px;">Find-byte</td>
+          <td style="padding: 8px;">Exact Match</td>
+          <td style="padding: 8px; text-align: right;">0.4700</td>
+        </tr>
+      </table>
+
+      <h3>Dataset and Preprocessing</h3>
+      <div class="image-container">
+        <img src="Assets/data_preprocessing.png" alt="Data Preprocessing Workflow" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">
+      </div>
+      <p>Our experiments utilized five publicly accessible network traffic datasets totaling approximately 189 gigabytes, including ISCX-Tor2016, USTCTFC2016, ISCXVPN2016, DoHBrw2020, and CICIoT2022. These were processed through flow splitting using 5-tuple rules and then chunked into appropriate sizes for model training.</p>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="content-section" id="conclusion">
+      <h2>Conclusion</h2>
+      <p>In this work, we introduced ByteFlow, a novel approach for deep packet inspection and network traffic analysis, built upon the byte-level ByT5-small architecture. Motivated by the challenges in applying traditional LLMs to the structured and byte-oriented nature of network data, we proposed several key modifications:</p>
+      <ul>
+        <li>A specialized tokenization strategy to explicitly represent packet and flow structures with custom tokens</li>
+        <li>The adaptation of Two-Dimensional Table Positional Encoding (2D-TPE) to better capture the spatial relationships within PCAP data</li>
+        <li>A phased training methodology involving domain-specific pre-training on PCAP and text data, followed by multi-task fine-tuning on diverse packet analysis tasks</li>
+      </ul>
+      
+      <p>Our initial experiments underscored the critical role of domain-specific pre-training, as the ByteFlow Base model significantly outperformed a standard fine-tuned ByT5-small on foundational byte-level tasks, demonstrating the value of adapting to inherent byte patterns in network traffic.</p>
+      
+      <p>Future work will focus on comprehensive evaluations, exploring techniques to enhance the model's semantic understanding of network protocols, and further refining the 2D-TPE mechanism and its integration. ByteFlow represents a promising step towards developing versatile and robust LLM-based solutions for nuanced network intelligence, capable of operating directly on raw packet data and performing a diverse array of analytical tasks.</p>
+    </div>
+
+    <!-- BibTeX -->
+    <div class="bibtex-section" id="bibtex">
+      <h2>BibTeX</h2>
+      <button class="bibtex-copy-button" onclick="copyBibTeX()">
+        Copy to Clipboard
+      </button>
+      <pre>
+        <code class="language-bibtex">
+@inproceedings{orojo2024byteflow,
+  title={ByteFlow: The Deep Sea Parser for AI-Powered Network Intelligence},
+  author={Orojo, Abanisenioluwa and El-Mahmoud, Emmanuelli},
+  year={2024},
+  organization={Baylor University}
+}
+        </code>
+      </pre>
+    </div>
+
+    <!-- Acknowledgement -->
+    <div class="content-section" id="acknowledgement">
+      <h2>Acknowledgement</h2>
+      <p>This research was supported by the CTCR Grant. We thank the Department of Computer Science at Baylor University for providing computational resources and support for this project.</p>
+    </div>
+
+    <div class="footer">
+      <p>© 2024 Baylor University, Department of Computer Science. All rights reserved.</p>
+    </div>
+
+    <!-- Button to scroll to top -->
+    <button class="scrollUpBtn" id="scrollUpBtn" onclick="scrollToTop()">
+      ⬆
+    </button>
+
+    <script src="script.js"></script>
+  </body>
+</html>
