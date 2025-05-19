@@ -3,6 +3,7 @@ import random
 
 import torch
 from datasets import load_dataset, IterableDataset, interleave_datasets
+from dotenv import load_dotenv
 from transformers import (
     T5ForConditionalGeneration,
     T5Config,
@@ -10,8 +11,10 @@ from transformers import (
     Trainer,
 )
 
-from src.baseline.t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
-from src.byteflow.tokenizer.tokenizer import HybridByT5PCAPTokenizer
+from t5_data_collator import DataCollatorForT5MLM, compute_t5_input_and_target_lengths
+from src.tokenizer.hybrid_tokenizer import HybridByT5PCAPTokenizer
+
+load_dotenv()
 
 # Constants
 MAX_SEQ_LENGTH = 1024
@@ -83,7 +86,7 @@ def train_byt5_on_mc4_and_pcap():
     print("MC4 English dataset loaded successfully")
 
     # Create a streaming PCAP dataset
-    pcap_dir = "../data/flows"  # Update this path to your PCAP directory
+    pcap_dir = "../data/flows"
 
     # Function to iterate through PCAP files and yield them one by one
     def pcap_iterator():
@@ -130,7 +133,7 @@ def train_byt5_on_mc4_and_pcap():
     train_dataset = interleave_datasets(
         [eng_ds, pcap_ds],
         probabilities=[0.8, 0.2],
-        stopping_strategy="first_exhausted"
+        stopping_strategy="all_exhausted"
     )
 
     # Initialize the data collator
@@ -148,18 +151,11 @@ def train_byt5_on_mc4_and_pcap():
     # Configure output directory
     output_dir = "./byteflow_1024"
 
-    # Calculate optimal number of dataloader workers
-    num_cpus = os.cpu_count()
-    dataloader_workers = min(
-        max(1, (
-                    num_cpus // torch.cuda.device_count()) if torch.cuda.is_available() and torch.cuda.device_count() > 0 else num_cpus // 2 if num_cpus else 4),
-        32
-    )
-
     # Configure training arguments
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,
+        run_name=f"byteflow_training_{os.path.basename(output_dir)}",
         # Batch size and training length
         per_device_train_batch_size=90,
         max_steps=1_000_000,
@@ -177,7 +173,7 @@ def train_byt5_on_mc4_and_pcap():
         weight_decay=0.01,
         # Hardware optimization
         bf16=True,
-        dataloader_num_workers=dataloader_workers,
+        dataloader_num_workers=1,
         dataloader_pin_memory=True,
         # Reporting
         report_to=["wandb"],
@@ -189,7 +185,7 @@ def train_byt5_on_mc4_and_pcap():
         args=training_args,
         train_dataset=train_dataset,
         data_collator=data_collator,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
     )
 
     # Start training

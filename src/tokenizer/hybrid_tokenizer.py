@@ -2,7 +2,7 @@ import os
 import tempfile
 from transformers import ByT5Tokenizer
 
-from src.byteflow.tokenizer.pcap_tokenizer import PCAPTokenizer
+from src.tokenizer.pcap_tokenizer import PCAPTokenizer
 
 
 class HybridByT5PCAPTokenizer(ByT5Tokenizer):
