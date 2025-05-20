@@ -1,5 +1,7 @@
 import os
 import tempfile
+
+import torch
 from transformers import ByT5Tokenizer
 
 from src.tokenizer.pcap_tokenizer import PCAPTokenizer
@@ -277,3 +279,111 @@ class HybridByT5PCAPTokenizer(ByT5Tokenizer):
         """PCAP bytes followed by text"""
         # Note: The order is preserved in the token sequence
         return self.encode_mixed_input(pcap_bytes=pcap_bytes, text=text)
+
+    def get_2d_position_indices(self, input_ids, pcap_only=False):
+        """
+        Generate position indices for both row-wise and column-wise traversal.
+
+        Args:
+            input_ids: token IDs
+            pcap_only: if True, only assign 2D positions to PCAP tokens
+
+        Returns:
+            position_indices: tensor of shape [batch_size, seq_len, 2]
+                             where [:,:,0] contains row-wise positions
+                             and [:,:,1] contains column-wise positions
+        """
+        if isinstance(input_ids, torch.Tensor):
+            batch_size, seq_length = input_ids.shape
+            device = input_ids.device
+        else:
+            batch_size = len(input_ids)
+            seq_length = len(input_ids[0]) if batch_size > 0 else 0
+            device = "cpu"
+
+        # Initialize position indices
+        position_indices = torch.zeros((batch_size, seq_length, 2), dtype=torch.long, device=device)
+
+        for b in range(batch_size):
+            tokens = input_ids[b] if isinstance(input_ids, list) else input_ids[b].tolist()
+
+            # Initialize row-wise positions (standard sequential positions)
+            row_positions = torch.arange(seq_length, device=device)
+            position_indices[b, :, 0] = row_positions
+
+            # For column-wise positions, we need to identify packet structure
+            in_pcap = False
+            packet_start_positions = []
+            field_positions = {}  # Maps field index within packet to list of positions
+            current_field_idx = 0
+
+            for i, token_id in enumerate(tokens):
+                token_id = token_id if isinstance(token_id, int) else token_id.item()
+
+                # Check if we're entering PCAP section
+                if token_id == self.pcap_attachment_token_id or token_id == self.pcap_start_token_id:
+                    in_pcap = True
+                    continue
+
+                # Check if we're leaving PCAP section
+                if token_id == self.pcap_end_token_id:
+                    in_pcap = False
+                    continue
+
+                # Skip non-PCAP tokens if pcap_only is True
+                if pcap_only and not in_pcap:
+                    continue
+
+                # Track PCAP structure
+                if in_pcap:
+                    if token_id == self.packet_start_token_id:
+                        packet_start_positions.append(i)
+                        current_field_idx = 0
+                    elif token_id == self.field_sep_token_id:
+                        current_field_idx += 1
+                    else:
+                        # Regular token within a field
+                        if current_field_idx not in field_positions:
+                            field_positions[current_field_idx] = []
+                        field_positions[current_field_idx].append(i)
+
+            # Assign column-wise positions based on field positions
+            col_position = 0
+            for field_idx in sorted(field_positions.keys()):
+                for pos in field_positions[field_idx]:
+                    position_indices[b, pos, 1] = col_position
+                    col_position += 1
+
+            # For non-PCAP tokens, use row-wise position as column-wise too
+            if not pcap_only:
+                for i in range(seq_length):
+                    if position_indices[b, i, 1] == 0 and not in_pcap:
+                        position_indices[b, i, 1] = position_indices[b, i, 0]
+
+        return position_indices
+
+    def tokenize_with_2d_positions(self, text=None, pcap_file_path=None):
+        """
+        Tokenize inputs and return token IDs with 2D position indices.
+
+        Args:
+            text: Text content (optional)
+            pcap_file_path: Path to a PCAP file (optional)
+
+        Returns:
+            tuple: (token_ids, position_indices)
+        """
+        token_ids = self.tokenize_text_with_pcap(text, pcap_file_path)
+
+        # Convert to tensor if needed
+        if not isinstance(token_ids, torch.Tensor):
+            token_ids = torch.tensor(token_ids, dtype=torch.long)
+
+        # Add batch dimension if needed
+        if token_ids.dim() == 1:
+            token_ids = token_ids.unsqueeze(0)
+
+        # Generate 2D position indices
+        position_indices = self.get_2d_position_indices(token_ids)
+
+        return token_ids, position_indices

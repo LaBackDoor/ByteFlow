@@ -8,3 +8,6 @@
 /src/baseline/byt5_mc4_english_full_pretrain_1024/
 /.env
 /src/wandb/
+/preprocessing/flow_split/deleted_flows.txt
+/preprocessing/flow_split/flow_sizes.csv
+/src/byt5_hybrid_model_checkpoints/*
