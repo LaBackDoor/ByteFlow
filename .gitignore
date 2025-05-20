@@ -11,3 +11,5 @@
 /preprocessing/flow_split/deleted_flows.txt
 /preprocessing/flow_split/flow_sizes.csv
 /src/byt5_hybrid_model_checkpoints/
+/preprocessing/flow_split/largest_flow.txt
+/byt5_model_checkpoints/

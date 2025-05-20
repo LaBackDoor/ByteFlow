@@ -365,7 +365,6 @@ def train_byt5_model(model, tokenizer, batch_size=2, learning_rate=5e-5,
     optimizer = AdamW(model.parameters(), lr=learning_rate)
     loss_fn = CrossEntropyLoss(ignore_index=0)
 
-    # Create dataloader with interleaved data
     print("Creating interleaved dataloader...")
     dataloader = get_interleaved_dataloader(
         tokenizer=tokenizer,
@@ -379,7 +378,6 @@ def train_byt5_model(model, tokenizer, batch_size=2, learning_rate=5e-5,
     step = 0
     os.makedirs(save_path, exist_ok=True)
 
-    # In train_byt5_model:
     with tqdm(total=max_steps) as pbar:
         epoch = 0
         last_loss_for_epoch_checkpoint = None
