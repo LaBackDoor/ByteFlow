@@ -10,4 +10,4 @@
 /src/wandb/
 /preprocessing/flow_split/deleted_flows.txt
 /preprocessing/flow_split/flow_sizes.csv
-/src/byt5_hybrid_model_checkpoints/*
+/src/byt5_hybrid_model_checkpoints/
